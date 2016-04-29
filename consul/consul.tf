@@ -26,6 +26,7 @@ resource "docker_container" "consul-server1" {
 resource "docker_container" "consul-server2" {
   image = "${docker_image.consul.latest}"
   name = "consul-server2"
+  depends_on = ["docker_container.consul-server1"]
   restart = "always"
   must_run = true
 
