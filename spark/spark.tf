@@ -27,28 +27,18 @@ resource "docker_container" "spark-master" {
     external = 8080
   }
 
-  env = ["MASTER=spark://master:7077", "SPARK_CONF_DIR=/conf"]
+  env = ["MASTER=spark://spark-master:7077", "SPARK_CONF_DIR=/conf"]
 
-  volumes {
-    container_path = "/conf"
-    host_path = "/conf/master"
-  }
-
-  volumes {
-    container_path = "/tmp/data"
-    host_path = "/data"
-  }
-
-  #command = ["bin/spark-class", "org.apache.spark.deploy.master.Master", "-h", "master"]
+  command = ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
 }
 
 resource "docker_container" "spark-worker" {
-  depends_on = ["docker_container.spark-master"]
   image = "${docker_image.spark.latest}"
   name = "spark-worker"
   restart = "always"
   must_run = true
 
+  links = ["spark-master"]
   ports {
     internal = 8081
     external = 8081
@@ -56,15 +46,5 @@ resource "docker_container" "spark-worker" {
 
   env = ["SPARK_CONF_DIR=/conf", "SPARK_WORKER_CORES=2", "SPARK_WORKER_MEMORY=1g", "SPARK_WORKER_PORT=8081", "SPARK_WORKER_WEBUI_PORT=8081"]
 
-  volumes {
-    container_path = "/conf"
-    host_path = "/conf/worker"
-  }
-
-  volumes {
-    container_path = "/tmp/data"
-    host_path = "/data"
-  }
-
-  command = ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://master:7077"]
+  command = ["bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
 }
